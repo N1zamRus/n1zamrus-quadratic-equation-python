@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -10,6 +12,17 @@ from quadratic_equation import (
     parse_integer,
     solve,
 )
+
+CLI_PATH = Path(__file__).parents[1].joinpath("quadratic_equation.py")
+
+
+def run_cli(*arguments: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(CLI_PATH), *arguments],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
 
 
 def test_two_rational_roots_are_exact() -> None:
@@ -95,6 +108,9 @@ def test_invalid_coefficients_are_rejected() -> None:
     with pytest.raises(TypeError):
         parse_integer(1)  # type: ignore[arg-type]
 
+    with pytest.raises(ValueError, match="10,000"):
+        parse_integer("1" + "0" * 10_000)
+
 
 def test_signed_and_padded_decimal_strings_are_supported() -> None:
     assert parse_integer(" +00042 ") == 42
@@ -141,3 +157,41 @@ def test_cli_reports_invalid_input(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["1.5", "2", "3"]) == 2
 
     assert capsys.readouterr().err == "error: coefficient must be a decimal integer\n"
+
+
+@pytest.mark.parametrize(
+    ("arguments", "status"),
+    [
+        (("1", "-3", "2"), "two_real"),
+        (("1", "-2", "1"), "double_real"),
+        (("1", "2", "5"), "two_complex"),
+        (("0", "2", "4"), "one_real"),
+        (("0", "0", "1"), "no_solution"),
+        (("0", "0", "0"), "all_reals"),
+    ],
+)
+def test_cli_subprocess_reports_every_status(
+    arguments: tuple[str, str, str], status: str
+) -> None:
+    completed = run_cli(*arguments, "--json")
+
+    assert completed.returncode == 0
+    assert json.loads(completed.stdout)["status"] == status
+
+
+def test_cli_subprocess_reports_invalid_input_and_missing_arguments() -> None:
+    invalid = run_cli("1.5", "2", "3")
+    missing = run_cli("1", "2")
+
+    assert invalid.returncode == 2
+    assert invalid.stdout == ""
+    assert invalid.stderr == "error: coefficient must be a decimal integer\n"
+    assert missing.returncode == 2
+    assert "usage:" in missing.stderr
+
+
+def test_cli_subprocess_preserves_irrational_root_format() -> None:
+    completed = run_cli("1", "0", "-2")
+
+    assert completed.returncode == 0
+    assert "- sqrt(2)" in completed.stdout

@@ -12,6 +12,7 @@ from typing import Literal, Sequence
 
 _CHUNK_BASE = 1_000_000_000
 _DIGITS_PER_CHUNK = 9
+MAX_COEFFICIENT_DIGITS = 10_000
 _SMALL_PRIMES = (
     2,
     3,
@@ -85,6 +86,10 @@ def parse_integer(value: str) -> int:
         token = token[1:]
     if not token or any(character < "0" or character > "9" for character in token):
         raise ValueError("coefficient must be a decimal integer")
+    if len(token) > MAX_COEFFICIENT_DIGITS:
+        raise ValueError(
+            f"coefficient cannot contain more than {MAX_COEFFICIENT_DIGITS:,} digits"
+        )
 
     first_chunk_length = len(token) % _DIGITS_PER_CHUNK or _DIGITS_PER_CHUNK
     result = int(token[:first_chunk_length])
