@@ -1,4 +1,8 @@
+.DEFAULT_GOAL := test
+
+PYTHON ?= python3
+
 .PHONY: test
 
 test:
-	@echo "Здесь пока нет тестов. Первая задача — написать их."
+	$(PYTHON) -m pytest -q
