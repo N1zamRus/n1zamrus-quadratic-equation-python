@@ -73,6 +73,22 @@ python3 quadratic_equation.py 1 0 "-$(python3 -c 'print("1" + "0" * 9999)')"
 
 ## Проверка
 
+Для локальной настройки создайте изолированное окружение и установите только
+тестовую зависимость:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+make test PYTHON=.venv/bin/python
+```
+
+В Windows эквивалентная команда для Python — `py -m venv .venv`, а интерпретатор
+имеет путь `.venv\\Scripts\\python.exe`.
+
 ```bash
 make test
 ```
+
+Набор включает быстрый smoke-тест CLI и benchmark-ограничение: решение задачи
+с коэффициентом в 10 000 цифр должно завершаться менее чем за 5 секунд на CI-
+раннере. Коэффициент в 10 001 цифру отклоняется до запуска арифметики.
