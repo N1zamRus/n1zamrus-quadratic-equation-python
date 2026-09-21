@@ -2,7 +2,10 @@
 
 PYTHON ?= python3
 
-.PHONY: test
+.PHONY: setup test
+
+setup:
+	$(PYTHON) -m pip install -r requirements-dev.txt
 
 test:
 	$(PYTHON) -m pytest -q
