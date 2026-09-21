@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -122,6 +123,18 @@ def test_cli_json_output(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["1", "2", "5", "--json"]) == 0
 
     assert capsys.readouterr().out.strip() == '{"status": "two_complex", "roots": ["-1 + 2i", "-1 - 2i"]}'
+
+
+def test_cli_json_keeps_ten_thousand_digit_values_as_strings(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    coefficient = "1" + "0" * 9_999
+
+    assert main(["1", "0", "-" + coefficient, "--json"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "two_real"
+    assert all(isinstance(root, str) for root in payload["roots"])
 
 
 def test_cli_reports_invalid_input(capsys: pytest.CaptureFixture[str]) -> None:
