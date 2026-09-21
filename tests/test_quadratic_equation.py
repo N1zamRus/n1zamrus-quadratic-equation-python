@@ -87,6 +87,11 @@ def test_invalid_coefficients_are_rejected() -> None:
         parse_integer(1)  # type: ignore[arg-type]
 
 
+def test_signed_and_padded_decimal_strings_are_supported() -> None:
+    assert parse_integer(" +00042 ") == 42
+    assert parse_integer("-00042") == -42
+
+
 def test_discriminant_uses_integer_arithmetic() -> None:
     source = Path(__file__).parents[1].joinpath("quadratic_equation.py").read_text()
 
