@@ -5,6 +5,7 @@ import pytest
 from quadratic_equation import (
     discriminant,
     integer_to_decimal,
+    main,
     parse_integer,
     solve,
 )
@@ -104,3 +105,26 @@ def test_discriminant_uses_integer_arithmetic() -> None:
 
     assert discriminant("1", "-3", "2") == 1
     assert "float(" not in source
+
+
+def test_cli_human_output(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["1", "-3", "2"]) == 0
+
+    assert capsys.readouterr().out.splitlines() == [
+        "status: two_real",
+        "roots:",
+        "- 2",
+        "- 1",
+    ]
+
+
+def test_cli_json_output(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["1", "2", "5", "--json"]) == 0
+
+    assert capsys.readouterr().out.strip() == '{"status": "two_complex", "roots": ["-1 + 2i", "-1 - 2i"]}'
+
+
+def test_cli_reports_invalid_input(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["1.5", "2", "3"]) == 2
+
+    assert capsys.readouterr().err == "error: coefficient must be a decimal integer\n"

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import argparse
+import json
+import sys
 from dataclasses import dataclass
 from fractions import Fraction
 from math import isqrt
-from typing import Literal
+from typing import Literal, Sequence
 
 _CHUNK_BASE = 1_000_000_000
 _DIGITS_PER_CHUNK = 9
@@ -248,15 +251,45 @@ def solve(a: str | int, b: str | int, c: str | int) -> Solution:
     return _quadratic_roots(a_value, b_value, b_value * b_value - 4 * a_value * c_value)
 
 
-if __name__ == "__main__":
-    import argparse
+def _solution_payload(result: Solution) -> dict[str, object]:
+    return {
+        "status": result.status,
+        "roots": [root.expression() for root in result.roots],
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the command-line interface and return a process exit code."""
 
     parser = argparse.ArgumentParser(description="Solve an integer quadratic equation exactly")
     parser.add_argument("a")
     parser.add_argument("b")
     parser.add_argument("c")
-    arguments = parser.parse_args()
-    result = solve(arguments.a, arguments.b, arguments.c)
-    print(result.status)
-    for root in result.roots:
-        print(root.expression())
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="print a machine-readable JSON object instead of human-readable lines",
+    )
+    arguments = parser.parse_args(argv)
+
+    try:
+        result = solve(arguments.a, arguments.b, arguments.c)
+    except (TypeError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    if arguments.json:
+        print(json.dumps(_solution_payload(result), ensure_ascii=False))
+    else:
+        print(f"status: {result.status}")
+        if result.roots:
+            print("roots:")
+            for root in result.roots:
+                print(f"- {root.expression()}")
+        else:
+            print("roots: none")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
