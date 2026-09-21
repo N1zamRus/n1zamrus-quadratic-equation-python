@@ -38,6 +38,13 @@ def test_complex_roots_are_exact() -> None:
     assert [root.expression() for root in result.roots] == ["-1 + 2i", "-1 - 2i"]
 
 
+def test_pure_imaginary_roots_are_compact_and_exact() -> None:
+    result = solve(1, 0, 1)
+
+    assert result.status == "two_complex"
+    assert [root.expression() for root in result.roots] == ["i", "-i"]
+
+
 def test_linear_equation() -> None:
     result = solve(0, 2, 4)
 
